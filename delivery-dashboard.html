@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>送货看板 · 杭州</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EAE2CE;
+    --paper-deep:#DCD2B6;
+    --card-bg:#FBF8F0;
+    --ink:#22303B;
+    --ink-soft:#5B6B72;
+    --stamp-red:#B43B2F;
+    --seal-green:#2F6B4F;
+    --route-blue:#2C5F8A;
+    --amber:#C98A2B;
+    --line:#C9BFA0;
+    --line-soft:#DDD3B8;
+    --radius:10px;
+    --shadow:0 2px 6px rgba(34,48,59,.08), 0 1px 2px rgba(34,48,59,.06);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 1px 1px, rgba(34,48,59,.05) 1px, transparent 1.6px) 0 0/22px 22px,
+      var(--paper);
+    color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    min-height:100vh;
+  }
+  .mono{font-family:"JetBrains Mono","SF Mono",Consolas,monospace;}
+  .display{font-family:"Oswald","PingFang SC","Microsoft YaHei",sans-serif;letter-spacing:.02em;}
+
+  a{color:inherit;text-decoration:none;}
+  button{font:inherit;cursor:pointer;}
+  :focus-visible{outline:2px solid var(--route-blue);outline-offset:2px;}
+
+  .wrap{max-width:880px;margin:0 auto;padding:0 16px 64px;}
+
+  /* ===== Header / manifest top strip ===== */
+  .topbar{
+    background:linear-gradient(180deg,#1C2A35,#22323E);
+    color:#F2EEDF;
+    padding:22px 16px 26px;
+    margin-bottom:0;
+  }
+  .topbar-inner{max-width:880px;margin:0 auto;}
+  .brand-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+  .postmark-logo{
+    width:46px;height:46px;border-radius:50%;
+    border:2px solid #E8C766;
+    display:flex;align-items:center;justify-content:center;
+    transform:rotate(-6deg);flex-shrink:0;
+    position:relative;
+  }
+  .postmark-logo::after{content:'';position:absolute;inset:4px;border:1px dashed #E8C766;border-radius:50%;}
+  .postmark-logo span{font-weight:700;font-size:14px;color:#E8C766;}
+  .brand-text h1{font-size:21px;margin:0;font-weight:600;letter-spacing:.01em;}
+  .brand-text p{margin:2px 0 0;font-size:12.5px;color:#B9C2C6;}
+
+  .stats-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+  .date-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .date-arrow{
+    width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.25);
+    background:rgba(255,255,255,.08);color:#F2EEDF;display:flex;align-items:center;
+    justify-content:center;font-size:16px;line-height:1;
+  }
+  .date-arrow:hover{background:rgba(255,255,255,.16);}
+  .date-center{
+    display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:5px 6px 5px 14px;
+  }
+  .date-input{
+    background:transparent;border:none;color:#F2EEDF;font-size:14px;font-weight:600;
+    font-family:"JetBrains Mono","SF Mono",Consolas,monospace;padding:2px 0;color-scheme:dark;
+  }
+  .date-weekday{
+    font-size:11.5px;color:#E8C766;background:rgba(232,199,102,.14);
+    border-radius:999px;padding:3px 9px;white-space:nowrap;
+  }
+  .today-btn{
+    background:transparent;border:1px solid #E8C766;color:#E8C766;border-radius:999px;
+    padding:6px 14px;font-size:12.5px;font-weight:600;
+  }
+  .today-btn:hover{background:rgba(232,199,102,.12);}
+  .stat-pill{
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:999px;padding:6px 14px;font-size:13px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .stat-pill b{font-family:"Oswald";font-size:15px;font-weight:600;}
+  .stat-pill.pending b{color:#E8836F;}
+  .stat-pill.done b{color:#7FCBA6;}
+  .search-input{
+    flex:1;min-width:140px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:999px;padding:7px 14px;color:#F2EEDF;font-size:13.5px;
+  }
+  .search-input::placeholder{color:#9AA6AB;}
+  .add-btn{
+    margin-left:auto;background:#E8C766;color:#22303E;border:none;
+    border-radius:999px;padding:7px 16px;font-size:13.5px;font-weight:600;
+  }
+  .add-btn:hover{background:#F0D685;}
+
+  /* ===== Paste-text recognition box ===== */
+  .paste-box{
+    max-width:880px;margin:-14px auto 0;
+    background:var(--card-bg);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px;
+    box-shadow:var(--shadow);
+  }
+  .paste-label{display:block;font-size:13.5px;font-weight:600;margin-bottom:8px;}
+  .paste-box textarea{
+    width:100%;min-height:104px;resize:vertical;
+    border:1px solid var(--line);border-radius:8px;padding:11px 12px;
+    font-size:13.5px;line-height:1.55;color:var(--ink);background:#fff;
+    font-family:inherit;
+  }
+  .paste-box textarea::placeholder{color:#9CA6AC;}
+  .paste-hint{font-size:12px;color:var(--ink-soft);margin-top:6px;}
+  .paste-actions{display:flex;gap:10px;margin-top:12px;}
+  .recognize-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--route-blue);color:#fff;border:none;border-radius:8px;
+    padding:11px 22px;font-size:14px;font-weight:600;
+  }
+  .recognize-btn:hover{background:#2a567a;}
+  .recognize-btn:disabled{opacity:.65;cursor:not-allowed;}
+  .clear-btn{
+    background:transparent;border:1px solid var(--line);color:var(--ink-soft);
+    border-radius:8px;padding:11px 18px;font-size:13.5px;
+  }
+  .clear-btn:hover{background:var(--paper);}
+  .spinner{
+    width:14px;height:14px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.4);border-top-color:#fff;
+    animation:spin .7s linear infinite;flex-shrink:0;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ===== District filter chips ===== */
+  .filter-row{
+    display:flex;gap:8px;overflow-x:auto;padding:16px 0 6px;
+    scrollbar-width:none;
+  }
+  .filter-row::-webkit-scrollbar{display:none;}
+  .chip{
+    flex-shrink:0;border:1px solid var(--line);background:var(--card-bg);
+    color:var(--ink-soft);border-radius:999px;padding:6px 14px;font-size:13px;
+    white-space:nowrap;
+  }
+  .chip.active{background:var(--route-blue);border-color:var(--route-blue);color:#fff;}
+  .chip b{font-weight:600;margin-left:3px;}
+
+  /* ===== Route stop section header ===== */
+  .district-section{margin-top:8px;}
+  .route-stop-header{display:flex;align-items:center;gap:14px;padding:14px 2px 10px;}
+  .postmark{
+    width:50px;height:50px;border-radius:50%;border:2px solid var(--route-blue);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    color:var(--route-blue);font-weight:700;font-size:12.5px;position:relative;
+    transform:rotate(-5deg);background:var(--card-bg);
+  }
+  .postmark::after{content:'';position:absolute;inset:4px;border:1px dashed var(--route-blue);border-radius:50%;}
+  .route-stop-header h2{font-size:16px;margin:0;font-weight:600;}
+  .route-stop-header .sec-count{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+
+  .card-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;
+  }
+
+  /* ===== Waybill card ===== */
+  .waybill-card{
+    position:relative;background:var(--card-bg);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:20px 16px 16px;
+    border-left:5px solid var(--stamp-red);overflow:hidden;
+  }
+  .waybill-card.status-delivered{border-left-color:var(--seal-green);}
+  .waybill-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:9px;
+    background-image:radial-gradient(circle at 8px 4px, var(--paper) 4px, transparent 4.6px);
+    background-size:16px 9px;background-repeat:repeat-x;
+  }
+  .card-top-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;}
+  .recipient-name{font-size:16px;font-weight:600;}
+  .district-tag{
+    font-size:11px;color:var(--route-blue);border:1px solid var(--route-blue);
+    border-radius:5px;padding:1px 6px;white-space:nowrap;flex-shrink:0;
+  }
+  .address{font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:10px;}
+  .product-row{
+    font-size:13px;color:var(--ink);background:var(--paper);
+    border-radius:6px;padding:6px 10px;margin-bottom:10px;line-height:1.5;
+  }
+  .product-label{
+    font-size:10.5px;color:var(--amber);border:1px solid var(--amber);
+    border-radius:4px;padding:0 5px;margin-right:7px;vertical-align:1px;
+  }
+  .note{font-size:12.5px;color:var(--amber);margin-bottom:10px;}
+  .card-bottom-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .phone-link{font-size:14px;font-weight:500;color:var(--ink);border-bottom:1px dashed var(--line);}
+  .card-actions{display:flex;align-items:center;gap:6px;}
+  .action-btn{
+    background:transparent;border:1px solid var(--line);border-radius:7px;
+    display:flex;align-items:center;gap:4px;padding:6px 10px;
+    color:var(--ink-soft);font-size:12.5px;white-space:nowrap;
+  }
+  .action-btn:hover{background:var(--paper);}
+  .action-btn.delete-btn:hover{border-color:var(--stamp-red);color:var(--stamp-red);background:rgba(180,59,47,.06);}
+  .status-btn{
+    margin-top:12px;width:100%;border-radius:8px;border:1px solid var(--stamp-red);
+    background:transparent;color:var(--stamp-red);font-weight:600;font-size:13.5px;
+    padding:9px 0;
+  }
+  .status-btn:hover{background:rgba(180,59,47,.08);}
+  .status-delivered .status-btn{border-color:var(--seal-green);color:var(--seal-green);}
+  .status-delivered .status-btn:hover{background:rgba(47,107,79,.08);}
+
+  .stamp-mark{
+    position:absolute;top:14px;right:14px;width:64px;height:64px;border-radius:50%;
+    border:3px solid var(--seal-green);display:flex;align-items:center;justify-content:center;
+    color:var(--seal-green);font-weight:700;font-size:12px;text-align:center;line-height:1.2;
+    transform:rotate(-14deg) scale(0);opacity:0;mix-blend-mode:multiply;pointer-events:none;
+    transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .25s;
+  }
+  .stamp-mark::after{content:'';position:absolute;inset:4px;border:1px dashed var(--seal-green);border-radius:50%;}
+  .status-delivered .stamp-mark{transform:rotate(-14deg) scale(1);opacity:.85;}
+  @media (prefers-reduced-motion: reduce){
+    .stamp-mark{transition:none;}
+  }
+
+  /* ===== Empty state ===== */
+  .empty-state{
+    text-align:center;padding:50px 20px;color:var(--ink-soft);
+  }
+  .empty-state h3{color:var(--ink);font-size:16px;margin-bottom:6px;}
+  .empty-state p{font-size:13.5px;line-height:1.6;}
+
+  /* ===== Modal ===== */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(20,28,34,.55);
+    display:none;align-items:center;justify-content:center;padding:16px;z-index:50;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--card-bg);border-radius:12px;max-width:420px;width:100%;
+    padding:22px;box-shadow:0 12px 30px rgba(0,0,0,.25);
+  }
+  .modal h3{margin:0 0 16px;font-size:16px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;}
+  .field input,.field select,.field textarea{
+    width:100%;border:1px solid var(--line);border-radius:7px;padding:8px 10px;
+    font-size:14px;background:#fff;color:var(--ink);font-family:inherit;
+  }
+  .field textarea{resize:vertical;min-height:46px;}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .btn{flex:1;border-radius:8px;padding:10px 0;font-size:14px;font-weight:600;border:1px solid var(--line);background:#fff;}
+  .btn.primary{background:var(--route-blue);border-color:var(--route-blue);color:#fff;}
+  .btn.danger{background:transparent;border-color:var(--stamp-red);color:var(--stamp-red);}
+
+  /* ===== Toast ===== */
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(8px);
+    background:#22303B;color:#F2EEDF;padding:10px 18px;border-radius:8px;font-size:13.5px;
+    opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;z-index:60;max-width:90vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.error{background:var(--stamp-red);}
+
+  .footer-note{text-align:center;font-size:12px;color:var(--ink-soft);margin-top:30px;}
+
+  @media (max-width:480px){
+    .add-btn{margin-left:0;order:99;width:100%;text-align:center;}
+    .stats-row{gap:8px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand-row">
+      <div class="postmark-logo"><span>派</span></div>
+      <div class="brand-text">
+        <h1>送货看板</h1>
+        <p>粘贴文本识别 · 按杭州行政区分类 · 打卡送达状态</p>
+      </div>
+    </div>
+    <div class="date-nav">
+      <button class="date-arrow" id="prevDayBtn" aria-label="前一天">‹</button>
+      <div class="date-center">
+        <input type="date" id="dateInput" class="date-input">
+        <span class="date-weekday" id="dateWeekday">周三</span>
+      </div>
+      <button class="date-arrow" id="nextDayBtn" aria-label="后一天">›</button>
+      <button class="today-btn" id="todayBtn" hidden>回到今天</button>
+    </div>
+    <div class="stats-row">
+      <span class="stat-pill pending">待送达 <b id="pendingCount">0</b></span>
+      <span class="stat-pill done">已送达 <b id="doneCount">0</b></span>
+      <input class="search-input" id="searchInput" type="text" placeholder="搜索姓名 / 电话 / 地址">
+      <button class="add-btn" id="addBtn">+ 手动添加</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="paste-box">
+    <label class="paste-label" for="pasteTextarea">粘贴送货文本（支持一次粘贴多条）</label>
+    <textarea id="pasteTextarea" placeholder="例如：
+张先生 滨江区长河街道江虹路768号 浙焱上城 牛奶2箱、鸡蛋1箱 13800001111
+李女士 钱塘区下沙街道福稳路291号 凌涛药业 口罩10件 13900002222
+
+支持聊天记录、表格内容直接粘贴，多条记录会自动拆分识别，商品信息也会一起提取"></textarea>
+    <div class="paste-hint">粘贴的文本可以不规整，系统会自动拆分出姓名、电话、地址，并按区归类</div>
+    <div class="paste-actions">
+      <button class="recognize-btn" id="recognizeBtn">
+        <span class="spinner" id="recognizeSpinner" hidden></span>
+        <span>一键识别</span>
+      </button>
+      <button class="clear-btn" id="clearPasteBtn">清空</button>
+    </div>
+  </div>
+
+  <div class="filter-row" id="filterRow"></div>
+
+  <main id="sections"></main>
+
+  <div class="empty-state" id="emptyState" hidden>
+    <h3>还没有送货记录</h3>
+    <p>把送货文本粘贴到上方框中，自动识别收件人、地址、电话，<br>并按杭州行政区自动归类整理。</p>
+  </div>
+
+  <p class="footer-note">识别结果可能存在误差，请核对地址和电话后再出发 · 数据仅保存在你的账号下</p>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">编辑送货信息</h3>
+    <div class="field"><label>日期</label><input id="f_date" type="date"></div>
+    <div class="field"><label>收件人 / 称呼</label><input id="f_name" type="text"></div>
+    <div class="field"><label>电话</label><input id="f_phone" type="text"></div>
+    <div class="field"><label>详细地址</label><textarea id="f_address"></textarea></div>
+    <div class="field"><label>商品</label><input id="f_product" type="text" placeholder="例如：牛奶 2箱、鸡蛋 1箱"></div>
+    <div class="field"><label>所属区/县/市</label><select id="f_district"></select></div>
+    <div class="field"><label>备注</label><input id="f_note" type="text"></div>
+    <div class="modal-actions">
+      <button class="btn danger" id="modalDeleteBtn">删除</button>
+      <button class="btn" id="modalCancelBtn">取消</button>
+      <button class="btn primary" id="modalSaveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DISTRICTS = ["上城区","拱墅区","西湖区","滨江区","萧山区","余杭区","临平区","钱塘区","富阳区","临安区","桐庐县","淳安县","建德市","待分类"];
+const SHORT = {
+  "上城区":"上城","拱墅区":"拱墅","西湖区":"西湖","滨江区":"滨江","萧山区":"萧山",
+  "余杭区":"余杭","临平区":"临平","钱塘区":"钱塘","富阳区":"富阳","临安区":"临安",
+  "桐庐县":"桐庐","淳安县":"淳安","建德市":"建德","待分类":"待分"
+};
+const STORAGE_KEY = "deliveries-v1";
+
+let deliveries = [];
+let currentFilter = "all";
+let searchTerm = "";
+let currentDate = "";
+
+const sectionsEl = document.getElementById("sections");
+const filterRowEl = document.getElementById("filterRow");
+const emptyStateEl = document.getElementById("emptyState");
+const pendingCountEl = document.getElementById("pendingCount");
+const doneCountEl = document.getElementById("doneCount");
+const toastEl = document.getElementById("toast");
+const dateInput = document.getElementById("dateInput");
+const dateWeekdayEl = document.getElementById("dateWeekday");
+const prevDayBtn = document.getElementById("prevDayBtn");
+const nextDayBtn = document.getElementById("nextDayBtn");
+const todayBtn = document.getElementById("todayBtn");
+
+function uid(){ return "d" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function dateToStr(d){
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,"0"), day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function parseDateStr(s){
+  const [y,m,d] = s.split("-").map(Number);
+  return new Date(y, m-1, d);
+}
+function todayStr(){ return dateToStr(new Date()); }
+
+function updateDateUI(){
+  dateInput.value = currentDate;
+  dateWeekdayEl.textContent = parseDateStr(currentDate).toLocaleDateString("zh-CN", { weekday: "short" });
+  todayBtn.hidden = currentDate === todayStr();
+}
+
+function shiftDate(delta){
+  const d = parseDateStr(currentDate);
+  d.setDate(d.getDate() + delta);
+  currentDate = dateToStr(d);
+  updateDateUI();
+  render();
+}
+
+prevDayBtn.addEventListener("click", ()=>shiftDate(-1));
+nextDayBtn.addEventListener("click", ()=>shiftDate(1));
+todayBtn.addEventListener("click", ()=>{ currentDate = todayStr(); updateDateUI(); render(); });
+dateInput.addEventListener("change", ()=>{
+  if(dateInput.value){ currentDate = dateInput.value; updateDateUI(); render(); }
+});
+
+function showToast(msg, isError){
+  toastEl.textContent = msg;
+  toastEl.classList.toggle("error", !!isError);
+  toastEl.classList.add("show");
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(()=>toastEl.classList.remove("show"), 3200);
+}
+
+async function load(){
+  currentDate = todayStr();
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){ deliveries = JSON.parse(res.value); }
+  }catch(e){ deliveries = []; }
+  let migrated = false;
+  deliveries.forEach(d=>{ if(!d.date){ d.date = todayStr(); migrated = true; } });
+  if(migrated) save();
+  updateDateUI();
+  render();
+}
+
+async function save(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(deliveries), false);
+  }catch(e){ showToast("保存失败，请检查网络", true); }
+}
+
+function escapeHtml(s){
+  return (s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+function matchesSearch(item){
+  if(!searchTerm) return true;
+  const t = searchTerm.toLowerCase();
+  return (item.name||"").toLowerCase().includes(t) ||
+         (item.phone||"").toLowerCase().includes(t) ||
+         (item.address||"").toLowerCase().includes(t);
+}
+
+function renderFilters(){
+  const dayItems = deliveries.filter(d=>d.date===currentDate);
+  const counts = {};
+  DISTRICTS.forEach(d=>counts[d]=0);
+  dayItems.forEach(d=>{ if(counts[d.district]!==undefined) counts[d.district]++; });
+  const total = dayItems.length;
+
+  let html = `<button class="chip ${currentFilter==='all'?'active':''}" data-f="all">全部<b>${total}</b></button>`;
+  DISTRICTS.forEach(d=>{
+    if(counts[d] === 0 && currentFilter !== d) return;
+    html += `<button class="chip ${currentFilter===d?'active':''}" data-f="${d}">${d}<b>${counts[d]}</b></button>`;
+  });
+  filterRowEl.innerHTML = html;
+}
+
+function renderStats(){
+  const dayItems = deliveries.filter(d=>d.date===currentDate);
+  pendingCountEl.textContent = dayItems.filter(d=>d.status==='pending').length;
+  doneCountEl.textContent = dayItems.filter(d=>d.status==='delivered').length;
+}
+
+function cardHtml(item){
+  const productHtml = item.product ? `<div class="product-row"><span class="product-label">商品</span>${escapeHtml(item.product)}</div>` : "";
+  const noteHtml = item.note ? `<div class="note">备注：${escapeHtml(item.note)}</div>` : "";
+  const statusLabel = item.status==='delivered' ? '已送达 ↺ 撤回' : '标记已送达';
+  return `
+  <article class="waybill-card status-${item.status}" data-id="${item.id}">
+    <div class="card-top-row">
+      <span class="recipient-name">${escapeHtml(item.name)||'未填写'}</span>
+      <span class="district-tag">${item.district}</span>
+    </div>
+    <div class="address">${escapeHtml(item.address)||'地址待补充'}</div>
+    ${productHtml}
+    ${noteHtml}
+    <div class="card-bottom-row">
+      <a class="phone-link mono" href="tel:${escapeHtml(item.phone)}">${escapeHtml(item.phone)||'无电话'}</a>
+      <div class="card-actions">
+        <button class="action-btn edit-btn" aria-label="修改">✎ 修改</button>
+        <button class="action-btn delete-btn" aria-label="删除">🗑 删除</button>
+      </div>
+    </div>
+    <button class="status-btn">${statusLabel}</button>
+    <div class="stamp-mark">已<br>签收</div>
+  </article>`;
+}
+
+function render(){
+  renderFilters();
+  renderStats();
+
+  const visible = deliveries.filter(d=>d.date===currentDate && matchesSearch(d));
+  const order = currentFilter === 'all' ? DISTRICTS : [currentFilter];
+
+  let html = "";
+  order.forEach(district=>{
+    const items = visible.filter(d=>d.district===district);
+    if(items.length===0) return;
+    html += `
+    <section class="district-section">
+      <div class="route-stop-header">
+        <div class="postmark">${SHORT[district]||district.slice(0,2)}</div>
+        <div>
+          <h2>${district}</h2>
+          <div class="sec-count">${items.length} 单 · 已送达 ${items.filter(i=>i.status==='delivered').length}</div>
+        </div>
+      </div>
+      <div class="card-grid">${items.map(cardHtml).join("")}</div>
+    </section>`;
+  });
+
+  sectionsEl.innerHTML = html;
+  emptyStateEl.hidden = visible.length !== 0;
+  if(visible.length === 0){
+    const label = currentDate === todayStr() ? "今天" : `${parseDateStr(currentDate).getMonth()+1}月${parseDateStr(currentDate).getDate()}日`;
+    emptyStateEl.querySelector("h3").textContent = `${label}还没有送货记录`;
+  }
+}
+
+// ===== Event delegation for cards =====
+sectionsEl.addEventListener("click", (e)=>{
+  const card = e.target.closest(".waybill-card");
+  if(!card) return;
+  const id = card.dataset.id;
+  const item = deliveries.find(d=>d.id===id);
+  if(!item) return;
+
+  if(e.target.closest(".status-btn")){
+    item.status = item.status === "delivered" ? "pending" : "delivered";
+    save(); render();
+  } else if(e.target.closest(".edit-btn")){
+    openModal(item);
+  } else if(e.target.closest(".delete-btn")){
+    if(confirm(`删除「${item.name||'该条'}」的送货记录？`)){
+      deliveries = deliveries.filter(d=>d.id!==id);
+      save(); render();
+    }
+  }
+});
+
+filterRowEl.addEventListener("click", (e)=>{
+  const chip = e.target.closest(".chip");
+  if(!chip) return;
+  currentFilter = chip.dataset.f;
+  render();
+});
+
+document.getElementById("searchInput").addEventListener("input", (e)=>{
+  searchTerm = e.target.value.trim();
+  render();
+});
+
+// ===== Modal =====
+const modalOverlay = document.getElementById("modalOverlay");
+const fDate = document.getElementById("f_date");
+const fName = document.getElementById("f_name");
+const fPhone = document.getElementById("f_phone");
+const fAddress = document.getElementById("f_address");
+const fProduct = document.getElementById("f_product");
+const fDistrict = document.getElementById("f_district");
+const fNote = document.getElementById("f_note");
+let editingId = null;
+
+fDistrict.innerHTML = DISTRICTS.map(d=>`<option value="${d}">${d}</option>`).join("");
+
+function openModal(item){
+  editingId = item ? item.id : null;
+  document.getElementById("modalTitle").textContent = item ? "编辑送货信息" : "手动添加送货信息";
+  fDate.value = item ? item.date : currentDate;
+  fName.value = item ? item.name : "";
+  fPhone.value = item ? item.phone : "";
+  fAddress.value = item ? item.address : "";
+  fProduct.value = item ? item.product : "";
+  fDistrict.value = item ? item.district : "待分类";
+  fNote.value = item ? item.note : "";
+  document.getElementById("modalDeleteBtn").style.display = item ? "block" : "none";
+  modalOverlay.classList.add("open");
+}
+function closeModal(){ modalOverlay.classList.remove("open"); editingId = null; }
+
+document.getElementById("addBtn").addEventListener("click", ()=>openModal(null));
+document.getElementById("modalCancelBtn").addEventListener("click", closeModal);
+modalOverlay.addEventListener("click", (e)=>{ if(e.target===modalOverlay) closeModal(); });
+document.addEventListener("keydown", (e)=>{ if(e.key==="Escape" && modalOverlay.classList.contains("open")) closeModal(); });
+
+document.getElementById("modalSaveBtn").addEventListener("click", ()=>{
+  const data = {
+    date: fDate.value || currentDate,
+    name: fName.value.trim(),
+    phone: fPhone.value.trim(),
+    address: fAddress.value.trim(),
+    product: fProduct.value.trim(),
+    district: fDistrict.value,
+    note: fNote.value.trim()
+  };
+  if(!data.name && !data.address && !data.phone){
+    showToast("请至少填写姓名、地址或电话之一", true);
+    return;
+  }
+  if(editingId){
+    const item = deliveries.find(d=>d.id===editingId);
+    Object.assign(item, data);
+  } else {
+    deliveries.push({ id: uid(), status: "pending", ...data });
+  }
+  save(); render(); closeModal();
+  if(data.date !== currentDate){
+    showToast(`已保存到 ${data.date}`);
+  }
+});
+
+document.getElementById("modalDeleteBtn").addEventListener("click", ()=>{
+  if(editingId && confirm("确认删除这条记录？")){
+    deliveries = deliveries.filter(d=>d.id!==editingId);
+    save(); render(); closeModal();
+  }
+});
+
+// ===== Paste-text recognition =====
+const pasteTextarea = document.getElementById("pasteTextarea");
+const recognizeBtn = document.getElementById("recognizeBtn");
+const recognizeSpinner = document.getElementById("recognizeSpinner");
+const clearPasteBtn = document.getElementById("clearPasteBtn");
+
+clearPasteBtn.addEventListener("click", ()=>{
+  pasteTextarea.value = "";
+  pasteTextarea.focus();
+});
+
+recognizeBtn.addEventListener("click", handleRecognizeText);
+pasteTextarea.addEventListener("keydown", (e)=>{
+  if((e.metaKey || e.ctrlKey) && e.key === "Enter") handleRecognizeText();
+});
+
+const EXTRACTION_PROMPT = `你是一名物流信息提取助手。用户会粘贴一段文本，其中可能包含一条或多条送货信息（可能来自聊天记录、表格或笔记，格式可能不规整，一行一条或多行一条都有可能）。请逐条提取。
+
+杭州市的行政区划（市辖区/县/代管市）一共13个，分别是：
+上城区、拱墅区、西湖区、滨江区、萧山区、余杭区、临平区、钱塘区、富阳区、临安区、桐庐县、淳安县、建德市。
+
+对每一条记录提取以下字段：
+- name：收件人姓名或称呼（姓氏、店铺名、单位名等照抄）
+- phone：联系电话，去除所有空格，仅保留数字；如果号码不完整或不确定，按原文尽量还原，不要编造数字
+- address：详细地址全文，包含街道、门牌号、楼栋、单位名称等内容
+- product：商品/货品信息，包括品名、规格、数量等（如"牛奶2箱、鸡蛋1箱"），如果文本中没有提到具体商品，则填空字符串
+- district：根据地址内容判断所属区/县/市，必须从上面13个名称中选择一个；如果地址中没有区县信息或无法判断，则填"待分类"
+- note：其他备注信息（序号、特殊说明等），没有则填空字符串
+
+请只输出一个JSON数组，不要输出任何其他文字、说明或Markdown代码块标记。如果文本中没有任何送货信息，输出 []。`;
+
+async function analyzeText(text){
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2000,
+      messages: [{
+        role: "user",
+        content: `${EXTRACTION_PROMPT}\n\n以下是用户粘贴的文本：\n"""\n${text}\n"""`
+      }]
+    })
+  });
+  const data = await response.json();
+  if(data.error) throw new Error(data.error.message || "识别请求失败");
+  const textOut = (data.content||[]).map(b=>b.text||"").join("\n");
+  let clean = textOut.replace(/```json/gi,"").replace(/```/g,"").trim();
+  const match = clean.match(/\[[\s\S]*\]/);
+  if(match) clean = match[0];
+  let parsed;
+  try{ parsed = JSON.parse(clean); }
+  catch(e){ throw new Error("未能解析识别结果，请重试"); }
+  if(!Array.isArray(parsed)) throw new Error("识别结果格式异常");
+  return parsed;
+}
+
+async function handleRecognizeText(){
+  const text = pasteTextarea.value.trim();
+  if(!text){ showToast("请先粘贴送货文本", true); return; }
+
+  recognizeBtn.disabled = true;
+  recognizeSpinner.hidden = false;
+  try{
+    const extracted = await analyzeText(text);
+    extracted.forEach(raw=>{
+      const district = DISTRICTS.includes(raw.district) ? raw.district : "待分类";
+      deliveries.push({
+        id: uid(),
+        date: currentDate,
+        name: (raw.name||"").toString().trim(),
+        phone: (raw.phone||"").toString().trim(),
+        address: (raw.address||"").toString().trim(),
+        product: (raw.product||"").toString().trim(),
+        district,
+        note: (raw.note||"").toString().trim(),
+        status: "pending"
+      });
+    });
+    await save();
+    render();
+    if(extracted.length){
+      pasteTextarea.value = "";
+      const dateNote = currentDate === todayStr() ? "" : `（${currentDate}）`;
+      showToast(`识别出 ${extracted.length} 条送货信息${dateNote}`);
+    } else {
+      showToast("未识别到送货信息，请检查粘贴的文本", true);
+    }
+  }catch(err){
+    showToast(`识别失败：${err.message}`, true);
+  }finally{
+    recognizeBtn.disabled = false;
+    recognizeSpinner.hidden = true;
+  }
+}
+
+load();
+</script>
+</body>
+</html>
